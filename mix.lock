@@ -1,1 +1,1 @@
-%{"socket": {:hex, :socket, "0.2.8"}}
+%{"socket": {:hex, :socket, "0.2.8", "611763056c2871c12eb01df8f4f1b566042fa1420d63a34628455f441df4807e", [:mix], []}}
