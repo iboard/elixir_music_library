@@ -4,134 +4,82 @@ defmodule Mix.Tasks.Scs do
 
   use Mix.Task
 
+  def start_link do
+    Agent.start_link(fn -> MapSet.new end, name: __MODULE__)
+  end
+
+  @doc "Marks a task as executed"
+  def put_entry(song, tags) do
+    item = {song, tags}
+    Agent.update(__MODULE__, &MapSet.put(&1, item))
+  end
+
+
   @shortdoc "SCS: List directory as ID3 List"
   def run(args) do
+    start_link
     { opts, _, _ } = OptionParser.parse(args,
                        aliases: [
-                         p: :path, 
-                         d: :dirnames,
-                         q: :quiet, 
-                         e: :empty, 
-                         i: :ids,
-                         f: :filenames,
-                         l: :log,
-                         o: :output,
-                         c: :copy,
-                         s: :summarize
+                         p: :path
                        ]
                      )
 
-    IO.puts "Parsing MP3 files with options:"
-    IO.puts "  source path -p #{opts[:path]}"
-    IO.puts "  quiet, no errors -q  #{opts[:quiet] || false}"
-    IO.puts "  output empty tags -e  #{opts[:empty] || false}"
-    IO.puts "  add ids -i #{opts[:ids]   || false}"
-    IO.puts "  output original filename -f #{opts[:filenames] || false}"
-    IO.puts "  output original path -d #{opts[:dirnames] || false}"
-    IO.puts "  output prefix -o #{opts[:output] || false}"
-    IO.puts "  output log -l #{opts[:log] || false}"
-    IO.puts "  copy to output path -c #{opts[:copy] || false}"
-    IO.puts "  summarize -s #{opts[:summarize] || false}"
 
-    Mp3File.list(opts[:path])
-      |> Enum.reduce( %{next_id: 1}, fn song, acc -> 
-           next_id = acc[:next_id]
-           sum     = acc[:sum] || %{count: 0, size: 0}
-           { count, _ } = case parse_mp3_file(song,opts) do
-                 { :ok, tags }         -> { 1, add_id(tags,opts,next_id) |>  copy_file(song,opts) |> add_stats }
-                 { :invalid, _tags }   -> { 0, if(opts[:empty], do: IO.puts "EMPTY: #{song}") }
-                 { :error, message }   -> { 0, unless(opts[:quiet], do: IO.puts "ERROR: #{message}") }
-                 _ -> { 0, "unhandled error" }
-           end
-           %{ next_id: next_id+count }
-         end)
-      |> inspect
+    list = Mp3File.list(opts[:path])
+     
+    song_map = Stream.map( list, fn song ->
+      case parse_mp3_file(song) do
+        { :ok, %{album: "", artist: "", title: ""} } -> { 0, song, :empty }
+        { :ok, tags }         -> { 1, song, tags }
+        { :error, message }   -> { 0, :error, message }
+      end
+    end)
+    |> Stream.filter( fn {count,_,_} -> count > 0 end) 
+    |> Stream.map(fn {count, song, entry} -> inspect_song(count,song,entry) end)
+
+    song_map 
+      |> Enum.reduce( 0, fn _entry,acc -> acc+1 end)
       |> IO.puts
+
+    song_map
+      |> Enum.each(fn {_count, song, entry} -> put_entry(song,entry) end)
+
+    inspect(take_all) |> IO.puts 
   end
 
-  defp summarize tags, acc, opts do
-    if(opts[:summarize]) do
-      Map.put( tags, :summarize, %{ size: acc[:size] + 1} )
-      [tags, acc]
-    end
+  @doc "Resets the executed tasks and returns the previous list of tasks"
+  def take_all() do
+    Agent.get(__MODULE__, fn set ->
+      MapSet.to_list(set)
+      |> Enum.each(fn rec ->
+        execute_pair(rec) 
+      end)
+    end,60000)
   end
 
-  defp add_stats(tags) do
-
-  end
-
-  defp copy_file tags, song, opts do
-    source = Path.join(tags[:path], tags[:file])
-    target = Path.join(opts[:output], tags[:artist])
-             |> Path.join(tags[:album])
-             |> Path.join(sanitize("#{:io_lib.format("~5B_~ts.mp3",[tags[:_id_],tags[:title]])}"))
-    prefix = if(opts[:copy], do: "COPY", else: "FOUND")
-    if(opts[:log], do: IO.puts "#{prefix} #{source} TO #{target}")
-    if(opts[:copy], do: copy(source,target))
-    tags
-  end
-
-  defp copy source, target do
-    dir = Path.dirname(target)
-    ensure_path(dir)
-    copy_file(source, target)
-  end
-
-  defp copy_file(source,target) do
-    File.cp(source,target)
-  end
-
-  defp ensure_path dir do
-    case File.mkdir_p(dir) do
-      :ok -> { "Path ok" }
-      {:error, posix} -> { IO.puts "ERROR MKDIR #{posix}" }
-      _ -> { IO.puts "UNKNOWN STATE" }
-    end
-  end
-
-  defp sanitize input do
-    String.strip(input)
-    |> String.replace( ~r/\s+/, "_" )
-    |> String.replace( ~r/'/, "_" )
-    |> String.replace( ~r/_+/, "_" )
-    |> String.replace( ~r/[\(\)]/, "-" )
-  end
-
-  defp add_id tags, opts, id do
-    if(opts[:ids], do: Map.put(tags, :_id_, id), else: tags)
-  end
-
-  defp output tags do
-    tags |> inspect |> IO.puts
-    tags
-  end
-  defp parse_mp3_file(song,opts) do
+  defp execute_pair rec do
+    IO.puts inspect(rec)
+    { file, func } = rec
+    IO.puts "FILE: #{file}"
+    IO.puts "FUNC: #{inspect func}"
     try do
-      Mp3File.extract_id3(song) |> validate_tags(song,opts)
+      tags = func.(file)
+      IO.puts "TAGS: #{inspect tags}"
+    rescue
+      UnicodeConversionError -> { :error, "UTF-8 Error in #{file}'s MP3 tags" }
+      File.Error -> { :error, "FILE #{file} ERROR" }
+    end
+  end
+  defp inspect_song count,song,entry do
+    IO.puts "#{song} => #{inspect(entry)}"
+    {count,song,entry}
+  end
+
+  defp parse_mp3_file(song) do
+    try do
+      { :ok, fn s -> Mp3File.extract_id3(s) end }
     rescue
       UnicodeConversionError -> { :error, "UTF-8 Error in #{song}'s MP3 tags" }
-    end
-  end
-
-  defp validate_tags %{album: "", artist: "", title: ""}, file, _opts do
-    { :invalid, file }
-  end
-  defp validate_tags tags, file, opts do
-    { :ok, tags |> add_path(opts,file) |> add_file(opts,file) }
-  end
-
-  defp add_path tags, opts, file do
-    if opts[:dirnames] do
-      tags |> Map.put(:path, Path.dirname(file)) 
-    else
-      tags
-    end
-  end
-  defp add_file tags, opts, file do
-    if opts[:filenames] do
-      tags |> Map.put(:file, Path.basename(file)) 
-    else
-      tags
     end
   end
 
