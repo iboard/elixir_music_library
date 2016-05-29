@@ -43,3 +43,7 @@ Quick start
       o: :list_orphands,........ output orphaned entries
       a: :list_albums .......... output album list
 
+Get Started
+===========
+
+see file `lib/mix/tasks/scs.ex` how to use this library.
