@@ -1,10 +1,30 @@
 defmodule Mp3File do
+  @moduledoc """
+  Handle MP3 files
+  Credit and Copyright: https://github.com/anisiomarxjr/shoutcast-server
+  """
+
+
+  @doc "Extract id3 section from binary file"
   def extract_metadata(file) do
     read_file = File.read!(file)
     file_length = byte_size(read_file)
     music_data = file_length - 128
     << _ :: binary-size(music_data), id3_section :: binary >> = read_file
     id3_section
+  end
+
+  def extract_id3(file) do
+    metadata = extract_metadata(file)
+    parse_id3(metadata)
+  end
+
+  def extract_id3_list(folder) do
+    folder |> list |> Enum.map(&extract_id3/1)
+  end
+
+  def list(folder) do
+    folder |> Path.join("**/*.mp3") |> Path.wildcard
   end
 
   defp parse_id3(metadata) do
@@ -21,16 +41,4 @@ defmodule Mp3File do
     text |> String.graphemes |> Enum.filter(not_zero) |> to_string |> String.strip
   end
 
-  def extract_id3(file) do
-    metadata = extract_metadata(file)
-    parse_id3(metadata)
-  end
-
-  def extract_id3_list(folder) do
-    folder |> list |> Enum.map(&extract_id3/1)
-  end
-
-  def list(folder) do
-    folder |> Path.join("**/*.mp3") |> Path.wildcard
-  end
 end

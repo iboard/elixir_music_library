@@ -1,8 +1,8 @@
-defmodule ShoutcastServer.Mixfile do
+defmodule MusicLibrary.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :shotcast_server,
+    [app: :music_library,
      version: "0.0.1",
      elixir: "~> 1.0",
      deps: deps]
@@ -13,7 +13,7 @@ defmodule ShoutcastServer.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [applications: [:logger],
-     mod: {ShoutcastServer, []}]
+     mod: {MusicLibrary, []}]
   end
 
   # Dependencies can be Hex packages:
@@ -26,6 +26,6 @@ defmodule ShoutcastServer.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:socket, "~> 0.2"}]
+    []
   end
 end
