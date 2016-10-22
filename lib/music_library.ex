@@ -59,7 +59,7 @@ defmodule MusicLibrary do
   # private
 
   defp all_files do
-    Mp3Proxy.list
+    Mp3Proxy.all
   end
 
 end

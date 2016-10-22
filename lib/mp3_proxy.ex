@@ -14,8 +14,8 @@ defmodule Mp3Proxy do
   end
 
   @doc "add entry to the set"
-  def add_entry(file) do
-    item = {file, parse_mp3_file(file)}
+  def add_entry(filename) do
+    item = {filename, parse_mp3_file(filename)}
     Agent.update(__MODULE__, fn(current_state) ->
       %Mp3Repo{
         path: current_state.path, 
@@ -38,8 +38,8 @@ defmodule Mp3Proxy do
   end
 
   @doc "Extract the list of files from the current state"
-  def list do
-    Agent.get(__MODULE__, fn state -> Mp3File.list(state.path) end)
+  def all do
+    Agent.get(__MODULE__, fn state -> Mp3File.all(state.path) end)
   end
 
   # Helpers

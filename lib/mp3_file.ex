@@ -6,29 +6,31 @@ defmodule Mp3File do
 
 
   @doc "Extract id3 section from binary file"
-  def extract_metadata(file) do
-    read_file = File.read!(file)
-    file_length = byte_size(read_file)
-    music_data = file_length - 128
-    << _ :: binary-size(music_data), id3_section :: binary >> = read_file
-    id3_section
+  def extract_metadata(filename) do
+    File.read!(filename) |> split_binary
   end
 
-  def extract_id3(file) do
-    metadata = extract_metadata(file)
+  def extract_id3(filename) do
+    metadata = extract_metadata(filename)
     parse_id3(metadata)
   end
 
   def extract_id3_list(folder) do
-    folder |> list |> Enum.map(&extract_id3/1)
+    folder |> all |> Enum.map(&extract_id3/1)
   end
 
-  def list(folder) do
+  def all(folder) do
     folder |> Path.join("**/*.mp3") |> Path.wildcard
   end
 
   defp parse_id3(metadata) do
-    << _ :: binary-size(3), title :: binary-size(30), artist :: binary-size(30), album :: binary-size(30), _ :: binary >> = metadata
+    << _      :: binary-size(3),
+       title  :: binary-size(30),
+       artist :: binary-size(30),
+       album  :: binary-size(30),
+       _      :: binary 
+    >> = metadata
+
     %{
       title: sanitize(title),
       artist: sanitize(artist),
@@ -38,7 +40,18 @@ defmodule Mp3File do
 
   defp sanitize(text) do
     not_zero = &(&1 != <<0>>)
-    text |> String.graphemes |> Enum.filter(not_zero) |> to_string |> String.strip
+    text 
+      |> String.graphemes 
+      |> Enum.filter(not_zero) 
+      |> to_string 
+      |> String.strip
+  end
+
+  defp split_binary( data ) do
+    file_length = byte_size(data)
+    music_data = file_length - 128
+    << _ :: binary-size(music_data), id3_section :: binary >> = data
+    id3_section
   end
 
 end
