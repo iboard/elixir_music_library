@@ -23,17 +23,16 @@ defmodule Mp3FileTest do
 
   test "retuns id3 list from directory" do
     id3_list = Mp3File.extract_id3_list("./test/fixtures")
+
     assert id3_list == [
-      %{album: "The Essential (CD1)", artist: "The Clash", title: "English Civil War"},
-      %{album: "Blunderbuss", artist: "Jack White", title: "Missing Pieces"},
-      %{album: "Blunderbuss", artist: "Jack White", title: "Sixteen Saltines"},
-      %{album: "Blunderbuss", artist: "Jack White", title: "Freedom at 21"},
-      %{album: "LA Woman", artist: "the doors", title: "the changeling"},
-      %{album: "LA Woman", artist: "the doors", title: "love her madly"},
-      %{album: "LA Woman", artist: "the doors", title: "been down so long"},
-      %{album: "Clinophobia", artist: "Devil's Slingshot", title: "Nederland"}
-    ]
+             %{album: "The Essential (CD1)", artist: "The Clash", title: "English Civil War"},
+             %{album: "Blunderbuss", artist: "Jack White", title: "Missing Pieces"},
+             %{album: "Blunderbuss", artist: "Jack White", title: "Sixteen Saltines"},
+             %{album: "Blunderbuss", artist: "Jack White", title: "Freedom at 21"},
+             %{album: "LA Woman", artist: "the doors", title: "the changeling"},
+             %{album: "LA Woman", artist: "the doors", title: "love her madly"},
+             %{album: "LA Woman", artist: "the doors", title: "been down so long"},
+             %{album: "Clinophobia", artist: "Devil's Slingshot", title: "Nederland"}
+           ]
   end
-
-
 end

@@ -4,7 +4,6 @@ defmodule Mp3File do
   Credit and Copyright: https://github.com/anisiomarxjr/shoutcast-server
   """
 
-
   @doc "Extract id3 section from binary file"
   def extract_metadata(filename) do
     File.read!(filename) |> split_binary()
@@ -20,16 +19,12 @@ defmodule Mp3File do
   end
 
   def all(folder) do
-    folder |> Path.join("**/*.mp3") |> Path.wildcard
+    folder |> Path.join("**/*.mp3") |> Path.wildcard()
   end
 
   defp parse_id3(metadata) do
-    << _      :: binary-size(3),
-       title  :: binary-size(30),
-       artist :: binary-size(30),
-       album  :: binary-size(30),
-       _      :: binary 
-    >> = metadata
+    <<_::binary-size(3), title::binary-size(30), artist::binary-size(30), album::binary-size(30),
+      _::binary>> = metadata
 
     %{
       title: sanitize(title),
@@ -40,18 +35,18 @@ defmodule Mp3File do
 
   defp sanitize(text) do
     not_zero = &(&1 != <<0>>)
-    text 
-      |> String.graphemes 
-      |> Enum.filter(not_zero) 
-      |> to_string 
-      |> String.trim
+
+    text
+    |> String.graphemes()
+    |> Enum.filter(not_zero)
+    |> to_string
+    |> String.trim()
   end
 
-  defp split_binary( data ) do
+  defp split_binary(data) do
     file_length = byte_size(data)
     music_data = file_length - 128
-    << _ :: binary-size(music_data), id3_section :: binary >> = data
+    <<_::binary-size(music_data), id3_section::binary>> = data
     id3_section
   end
-
 end
