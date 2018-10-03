@@ -2,18 +2,14 @@ defmodule MusicLibrary.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :music_library,
-     version: "0.0.1",
-     elixir: "~> 1.0",
-     deps: deps]
+    [app: :music_library, version: "0.0.1", elixir: "~> 1.0", deps: deps()]
   end
 
   # Configuration for the OTP application
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger],
-     mod: {MusicLibrary, []}]
+    [applications: [:logger], mod: {MusicLibrary, []}]
   end
 
   # Dependencies can be Hex packages:

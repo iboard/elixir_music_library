@@ -7,7 +7,7 @@ defmodule Mp3File do
 
   @doc "Extract id3 section from binary file"
   def extract_metadata(filename) do
-    File.read!(filename) |> split_binary
+    File.read!(filename) |> split_binary()
   end
 
   def extract_id3(filename) do
@@ -16,7 +16,7 @@ defmodule Mp3File do
   end
 
   def extract_id3_list(folder) do
-    folder |> all |> Enum.map(&extract_id3/1)
+    folder |> all() |> Enum.map(&extract_id3/1)
   end
 
   def all(folder) do
@@ -44,7 +44,7 @@ defmodule Mp3File do
       |> String.graphemes 
       |> Enum.filter(not_zero) 
       |> to_string 
-      |> String.strip
+      |> String.trim
   end
 
   defp split_binary( data ) do
