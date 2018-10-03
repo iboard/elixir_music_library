@@ -15,11 +15,11 @@ defmodule Mp3File do
   end
 
   def extract_id3_list(folder) do
-    folder |> all() |> Enum.map(&extract_id3/1)
+    folder |> all() |> Stream.map(&extract_id3/1)
   end
 
   def all(folder) do
-    folder |> Path.join("**/*.mp3") |> Path.wildcard()
+    folder |> Path.join("**/*.mp3") |> Path.wildcard() |> Stream.map(& &1)
   end
 
   defp parse_id3(metadata) do
@@ -39,7 +39,7 @@ defmodule Mp3File do
     text
     |> String.graphemes()
     |> Enum.filter(not_zero)
-    |> to_string
+    |> to_string()
     |> String.trim()
   end
 

@@ -22,7 +22,7 @@ defmodule Mp3FileTest do
   end
 
   test "retuns id3 list from directory" do
-    id3_list = Mp3File.extract_id3_list("./test/fixtures")
+    id3_list = Mp3File.extract_id3_list("./test/fixtures") |> Enum.to_list
 
     assert id3_list == [
              %{album: "The Essential (CD1)", artist: "The Clash", title: "English Civil War"},
